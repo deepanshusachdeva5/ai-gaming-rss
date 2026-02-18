@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI in Gaming — News Feed</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <div class="header-title">
+        <h1>AI in Gaming</h1>
+        <span class="subtitle">Your curated news feed</span>
+      </div>
+      <div class="header-controls">
+        <input
+          type="search"
+          id="search"
+          placeholder="Filter by keyword…"
+          autocomplete="off"
+        />
+        <button id="refresh-btn" title="Fetch latest articles">&#8635; Refresh</button>
+        <button id="add-feed-btn" title="Add a custom RSS feed">+ Add Feed</button>
+      </div>
+    </div>
+    <div class="status-bar">
+      <span id="status-text">Loading…</span>
+      <span id="article-count"></span>
+    </div>
+  </header>
+
+  <main>
+    <div id="feed" class="feed-grid">
+      <div class="loading">Fetching articles…</div>
+    </div>
+  </main>
+
+  <!-- Add Feed Modal -->
+  <div id="feed-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Manage Feeds</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
+      </div>
+
+      <!-- Add form -->
+      <section class="modal-section">
+        <h3>Add a new RSS feed</h3>
+        <div class="form-group">
+          <label for="feed-url">Feed URL</label>
+          <div class="url-row">
+            <input id="feed-url" type="url" placeholder="https://example.com/feed.xml" autocomplete="off" />
+            <button id="check-feed-btn">Check</button>
+          </div>
+          <span id="feed-url-status" class="field-hint"></span>
+        </div>
+        <div class="form-group">
+          <label for="feed-name">Name <span class="field-hint">(auto-detected if blank)</span></label>
+          <input id="feed-name" type="text" placeholder="My Feed" />
+        </div>
+        <div class="form-group">
+          <label for="feed-category">Category</label>
+          <select id="feed-category">
+            <option value="AI Models">AI Models</option>
+            <option value="Game Dev AI">Game Dev AI</option>
+            <option value="Research">Research</option>
+            <option value="GitHub">GitHub</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button id="submit-feed-btn" class="btn-primary">Add Feed</button>
+        </div>
+        <p id="submit-status" class="field-hint"></p>
+      </section>
+
+      <!-- Existing custom feeds -->
+      <section class="modal-section">
+        <h3>Your custom feeds</h3>
+        <div id="custom-feeds-list"><p class="field-hint">Loading…</p></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

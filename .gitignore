@@ -1,0 +1,15 @@
+# Secrets & local config
+.env
+
+# Database (runtime data, not source)
+*.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# macOS
+.DS_Store
