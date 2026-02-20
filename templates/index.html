@@ -40,12 +40,18 @@
   <div id="feed-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modal-header">
-        <h2>Manage Feeds</h2>
+        <h2>Manage Sources</h2>
         <button class="modal-close" id="modal-close" aria-label="Close">&times;</button>
       </div>
 
-      <!-- Add form -->
-      <section class="modal-section">
+      <!-- Tabs -->
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="rss">RSS Feed</button>
+        <button class="modal-tab" data-tab="scrape">Any Website</button>
+      </div>
+
+      <!-- RSS tab -->
+      <section class="modal-section tab-content" id="tab-rss">
         <h3>Add a new RSS feed</h3>
         <div class="form-group">
           <label for="feed-url">Feed URL</label>
@@ -74,10 +80,47 @@
         <p id="submit-status" class="field-hint"></p>
       </section>
 
-      <!-- Existing custom feeds -->
-      <section class="modal-section">
-        <h3>Your custom feeds</h3>
+      <!-- Any Website (Tavily) tab -->
+      <section class="modal-section tab-content hidden" id="tab-scrape">
+        <h3>Add any website</h3>
+        <p class="field-hint tavily-note">Powered by Tavily AI — works on any site, no RSS needed.</p>
+        <div class="form-group">
+          <label for="site-url">Website URL</label>
+          <input id="site-url" type="url" placeholder="https://inworld.ai" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label for="site-name">Name <span class="field-hint">(optional)</span></label>
+          <input id="site-name" type="text" placeholder="Inworld AI" />
+        </div>
+        <div class="form-group">
+          <label for="site-query">Search hint <span class="field-hint">(optional — helps Tavily find relevant articles)</span></label>
+          <input id="site-query" type="text" placeholder="e.g. AI NPC game development" />
+        </div>
+        <div class="form-group">
+          <label for="site-category">Category</label>
+          <select id="site-category">
+            <option value="AI Models">AI Models</option>
+            <option value="Game Dev AI">Game Dev AI</option>
+            <option value="Research">Research</option>
+            <option value="GitHub">GitHub</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button id="submit-site-btn" class="btn-primary">Add Website</button>
+        </div>
+        <p id="submit-site-status" class="field-hint"></p>
+      </section>
+
+      <!-- RSS feeds list -->
+      <section class="modal-section" id="rss-list-section">
+        <h3>Your RSS feeds</h3>
         <div id="custom-feeds-list"><p class="field-hint">Loading…</p></div>
+      </section>
+
+      <!-- Scraped sites list -->
+      <section class="modal-section" id="scrape-list-section">
+        <h3>Your scraped websites</h3>
+        <div id="scraped-sites-list"><p class="field-hint">Loading…</p></div>
       </section>
     </div>
   </div>

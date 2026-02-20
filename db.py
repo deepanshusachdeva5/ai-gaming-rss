@@ -33,6 +33,16 @@ def init_db():
                 added_at    TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS scraped_sites (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                name        TEXT NOT NULL,
+                url         TEXT UNIQUE NOT NULL,
+                category    TEXT NOT NULL DEFAULT 'AI Models',
+                query       TEXT DEFAULT '',
+                added_at    TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         conn.commit()
 
 
@@ -63,6 +73,35 @@ def delete_custom_feed(feed_id: int):
         conn.execute("DELETE FROM custom_feeds WHERE id = ?", (feed_id,))
         if feed:
             conn.execute("DELETE FROM articles WHERE source = ?", (feed["name"],))
+        conn.commit()
+
+
+def get_scraped_sites() -> list[dict]:
+    with get_conn() as conn:
+        rows = conn.execute(
+            "SELECT * FROM scraped_sites ORDER BY added_at DESC"
+        ).fetchall()
+    return [dict(r) for r in rows]
+
+
+def add_scraped_site(name: str, url: str, category: str, query: str = "") -> int:
+    with get_conn() as conn:
+        cursor = conn.execute(
+            "INSERT INTO scraped_sites (name, url, category, query) VALUES (?, ?, ?, ?)",
+            (name, url, category, query),
+        )
+        conn.commit()
+        return cursor.lastrowid
+
+
+def delete_scraped_site(site_id: int):
+    with get_conn() as conn:
+        site = conn.execute(
+            "SELECT name FROM scraped_sites WHERE id = ?", (site_id,)
+        ).fetchone()
+        conn.execute("DELETE FROM scraped_sites WHERE id = ?", (site_id,))
+        if site:
+            conn.execute("DELETE FROM articles WHERE source = ?", (site["name"],))
         conn.commit()
 
 

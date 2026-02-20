@@ -9,7 +9,7 @@ import urllib.request
 from datetime import datetime
 from time import mktime
 
-from db import insert_articles, get_custom_feeds
+from db import insert_articles, get_custom_feeds, get_scraped_sites
 from feeds import FEEDS
 
 # GitHub Search API queries — AI models and tools usable in / for games.
@@ -269,3 +269,61 @@ def fetch_arxiv_papers() -> int:
 
     print(f"[arxiv] Processed {len(papers)} unique papers across {len(ARXIV_QUERIES)} queries.")
     return len(papers)
+
+
+# ---------------------------------------------------------------------------
+# Tavily — scrape any website (no RSS required)
+# ---------------------------------------------------------------------------
+
+def fetch_tavily_sites(sites: list[dict] | None = None) -> int:
+    """Use Tavily AI search to scrape user-added websites and insert into DB."""
+    api_key = os.environ.get("TAVILY_API_KEY", "").strip()
+    if not api_key:
+        print("[tavily] No TAVILY_API_KEY set — skipping.")
+        return 0
+
+    try:
+        from tavily import TavilyClient
+    except ImportError:
+        print("[tavily] tavily-python not installed. Run: pip install tavily-python")
+        return 0
+
+    if sites is None:
+        sites = get_scraped_sites()
+    if not sites:
+        return 0
+
+    client = TavilyClient(api_key=api_key)
+    articles = []
+
+    for site in sites:
+        domain = urllib.parse.urlparse(site["url"]).netloc or site["url"]
+        query = (site.get("query") or "").strip() or "AI gaming news"
+        try:
+            response = client.search(
+                query=query,
+                include_domains=[domain],
+                max_results=10,
+                search_depth="basic",
+            )
+            for r in response.get("results", []):
+                title = (r.get("title") or "").strip()
+                url = (r.get("url") or "").strip()
+                if not title or not url:
+                    continue
+                articles.append({
+                    "title": title,
+                    "url": url,
+                    "source": site["name"],
+                    "category": site["category"],
+                    "summary": (r.get("content") or "")[:500],
+                    "published": r.get("published_date"),
+                })
+        except Exception as exc:
+            print(f"[tavily] Error scraping {site['name']}: {exc}")
+
+    if articles:
+        insert_articles(articles)
+
+    print(f"[tavily] Processed {len(articles)} articles from {len(sites)} scraped sites.")
+    return len(articles)

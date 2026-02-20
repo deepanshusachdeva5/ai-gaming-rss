@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 
 import db
-from fetcher import fetch_all_feeds, fetch_github_repos, fetch_arxiv_papers, preview_feed
+from fetcher import fetch_all_feeds, fetch_github_repos, fetch_arxiv_papers, fetch_tavily_sites, preview_feed
 
 # Load .env if it exists (no extra dependency needed)
 _env_file = Path(__file__).parent / ".env"
@@ -25,6 +25,7 @@ def _refresh_all():
     fetch_all_feeds()
     fetch_github_repos()
     fetch_arxiv_papers()
+    fetch_tavily_sites()
 
 scheduler = BackgroundScheduler(daemon=True)
 scheduler.add_job(_refresh_all, "interval", minutes=30, id="feed_refresh")
@@ -53,8 +54,9 @@ def api_refresh():
     rss_count = fetch_all_feeds()
     gh_count = fetch_github_repos()
     arxiv_count = fetch_arxiv_papers()
+    tavily_count = fetch_tavily_sites()
     stats = db.get_stats()
-    return jsonify({"fetched": rss_count + gh_count + arxiv_count, **stats})
+    return jsonify({"fetched": rss_count + gh_count + arxiv_count + tavily_count, **stats})
 
 
 @app.route("/api/status")
@@ -142,6 +144,49 @@ def api_delete_feed(feed_id):
 
 
 # ---------------------------------------------------------------------------
+# Scraped sites management (Tavily)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/sites", methods=["GET"])
+def api_get_sites():
+    return jsonify(db.get_scraped_sites())
+
+
+@app.route("/api/sites", methods=["POST"])
+def api_add_site():
+    data = request.get_json(force=True) or {}
+    url = data.get("url", "").strip()
+    name = data.get("name", "").strip()
+    category = data.get("category", "AI Models").strip()
+    query = data.get("query", "").strip()
+
+    if not url:
+        return jsonify({"error": "url is required"}), 400
+
+    if not name:
+        from urllib.parse import urlparse
+        name = urlparse(url).netloc or url
+
+    try:
+        site_id = db.add_scraped_site(name, url, category, query)
+    except Exception as exc:
+        return jsonify({"error": f"Site already exists or DB error: {exc}"}), 409
+
+    # Immediately scrape the newly added site
+    site = {"id": site_id, "name": name, "url": url, "category": category, "query": query}
+    fetched = fetch_tavily_sites(sites=[site])
+
+    return jsonify({"id": site_id, "name": name, "url": url,
+                    "category": category, "fetched": fetched})
+
+
+@app.route("/api/sites/<int:site_id>", methods=["DELETE"])
+def api_delete_site(site_id):
+    db.delete_scraped_site(site_id)
+    return jsonify({"ok": True})
+
+
+# ---------------------------------------------------------------------------
 # Startup
 # ---------------------------------------------------------------------------
 
@@ -151,5 +196,6 @@ if __name__ == "__main__":
     fetch_all_feeds()
     fetch_github_repos()
     fetch_arxiv_papers()
+    fetch_tavily_sites()
     print("[app] Starting Flask on http://localhost:5000")
     app.run(debug=False, port=5000)
